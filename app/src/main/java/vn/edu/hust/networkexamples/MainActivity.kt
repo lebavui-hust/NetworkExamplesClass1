@@ -7,12 +7,19 @@ import android.net.NetworkCapabilities
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.widget.ImageView
 import androidx.lifecycle.lifecycleScope
+import com.bumptech.glide.Glide
+import com.bumptech.glide.request.RequestOptions
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
+import retrofit2.Retrofit
+import retrofit2.converter.moshi.MoshiConverterFactory
 import vn.edu.hust.networkexamples.databinding.ActivityMainBinding
 import java.net.HttpURLConnection
 import java.net.URL
@@ -44,16 +51,44 @@ class MainActivity : AppCompatActivity() {
             downloadFile()
         }
 
-        val jsonString = "[{\"name\":\"John\", \"age\":20, \"gender\":\"male\"}, {\"name\":\"Peter\", \"age\":21, \"gender\":\"male\"}, {\"name\":\"July\", \"age\":19, \"gender\":\"female\"}]"
-        val jArr = JSONArray(jsonString)
-        for (i in 0..jArr.length() - 1) {
-            val jObj = jArr.getJSONObject(i)
-            val name = jObj.getString("name")
-            val age = jObj.getInt("age")
-            val gender = jObj.getString("gender")
+//        val jsonString = "[{\"name\":\"John\", \"age\":20, \"gender\":\"male\"}, {\"name\":\"Peter\", \"age\":21, \"gender\":\"male\"}, {\"name\":\"July\", \"age\":19, \"gender\":\"female\"}]"
+//        val jArr = JSONArray(jsonString)
+//        for (i in 0..jArr.length() - 1) {
+//            val jObj = jArr.getJSONObject(i)
+//            val name = jObj.getString("name")
+//            val age = jObj.getInt("age")
+//            val gender = jObj.getString("gender")
+//
+//            Log.v("TAG", "$name - $age - $gender")
+//        }
 
-            Log.v("TAG", "$name - $age - $gender")
+        val moshi = Moshi.Builder()
+            .add((KotlinJsonAdapterFactory()))
+            .build()
+        val retrofit = Retrofit.Builder()
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .baseUrl("https://jsonplaceholder.typicode.com/")
+            .build()
+        val myService = retrofit.create(MyService::class.java)
+
+        lifecycleScope.launch(Dispatchers.IO) {
+//            val allPosts = myService.getAllPost()
+//            Log.v("TAG", "Num posts: ${allPosts.size}")
+//            for (post in allPosts) {
+//                Log.v("TAG", post.title)
+//            }
+
+            val post = myService.getPost(1)
+            Log.v("TAG", post.title)
         }
+
+        Glide.with(this)
+            .load("https://lebavui.github.io/walls/wall1.jpg")
+            .apply(
+                RequestOptions()
+                .placeholder(R.drawable.baseline_downloading_24)
+                .error(R.drawable.baseline_error_outline_24))
+            .into(findViewById<ImageView>(R.id.imageView))
     }
 
     fun sendGet() {
